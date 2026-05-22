@@ -1,0 +1,219 @@
+# forge.example.yaml — 配置文件示例（复制为 forge.local.yaml 后填写敏感字段）
+# 字段优先级：CLI 参数 > 配置文件 > 环境变量 > 内置默认值
+
+# ─────────────────────────────────────────────────────────────────
+# HTTP 服务器
+# ─────────────────────────────────────────────────────────────────
+server:
+  http_addr: ":8080"         # HTTP 监听地址，默认 :8080
+
+# ─────────────────────────────────────────────────────────────────
+# 日志
+# ─────────────────────────────────────────────────────────────────
+log:
+  level: "debug"             # debug | info | warn | error，默认 info；环境变量 LOG_LEVEL
+  format: "text"             # text | json，默认 text；环境变量 LOG_FORMAT
+  file: ""                   # 日志文件路径；留空则输出到 stderr
+
+# ─────────────────────────────────────────────────────────────────
+# 模型配置说明
+# 模型凭证不在全局配置文件中设置，而是通过租户设置（model_override）按租户配置。
+# 每个租户在创建/更新时通过 PATCH /admin/v1/tenant/settings 设置 model 字段，例如：
+#   {
+#     "model": {
+#       "provider": "anthropic",
+#       "api_key": "sk-...",
+#       "model": "claude-sonnet-4-6"
+#     }
+#   }
+# ─────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────
+# MCP 工具配置（详细示例见 configs/forge.mcp.example.yaml）
+# ─────────────────────────────────────────────────────────────────
+# mcp 中的配置会覆盖此处任何内联 tools: 块。
+# 路径相对于本文件所在目录。
+#mcp: "forge.mcp.local.yaml"
+
+# ─────────────────────────────────────────────────────────────────
+# 存储实例池
+# 在此定义命名存储实例，供 session / memory / tasks / store 等引用。
+# 引用格式：<type>.<name>，例如 postgres.default、redis.cache
+# ─────────────────────────────────────────────────────────────────
+storage:
+  # ── PostgreSQL 实例 ──────────────────────────────────────────────
+  postgres:
+    default:
+      dsn: ""   # 例："postgres://forge:pass@localhost/forge?sslmode=disable"
+                # 留空则读 FORGE_STORAGE_DSN
+    # reporting:
+    #   dsn: "postgres://forge:pass@reporting-host/reporting?sslmode=disable"
+
+  # ── Redis 实例 ──────────────────────────────────────────────────
+  redis:
+    default:
+      addr: "localhost:6379"    # Redis 地址；留空则读 FORGE_REDIS_ADDR
+      password: ""              # 留空则无认证；可读 FORGE_REDIS_PASSWORD
+      db: 0                     # 数据库编号，默认 0
+    # cache:
+    #   addr: "localhost:6380"
+    #   password: ""
+    #   db: 1
+
+# ─────────────────────────────────────────────────────────────────
+# Session 存储
+# driver 可选值：
+#   "memory"           — 内存（默认，重启后清空）
+#   "sqlite"           — 本地 SQLite
+#   "postgres.<name>"  — 引用 storage.postgres.<name>
+#   "redis.<name>"     — 引用 storage.redis.<name>
+# ─────────────────────────────────────────────────────────────────
+session:
+  driver: "sqlite"
+  options: {}
+
+  # ── SQLite 示例（本地开发持久化）──────────────────────────────────
+  # driver: "sqlite"
+  # options:
+  #   path: "./var/sessions.db"
+
+  # ── PostgreSQL 示例 ────────────────────────────────────────────
+  # driver: "postgres.default"
+  # options: {}
+
+  # ── Redis 示例 ────────────────────────────────────────────────
+  # driver: "redis.default"
+  # options: {}
+
+# ─────────────────────────────────────────────────────────────────
+# 沙箱执行环境
+# driver 可选值：local（默认）| docker | k8s
+# ─────────────────────────────────────────────────────────────────
+sandbox:
+  driver: "local"       # local（默认，工具直接在服务进程内执行，仅限开发/单机）
+  volumes_root: ""      # Docker/K8s：宿主机/NFS 共享根目录，{volumes_root}/{tenantID}/{sessionID}
+                        # 挂载为容器内 /workspace；local 模式留空，回退到 $HOME
+  options: {}
+
+  # ── Docker 驱动示例（推荐生产多租户隔离）──────────────────────────
+  # driver: "docker"
+  # volumes_root: "/mnt/shared/workspaces"  # 所有节点可访问的共享路径（NFS / EFS 等）
+  # options:
+  #   image: "ubuntu:22.04"                 # 沙箱镜像（默认 alpine:3.20）
+  #   network: "bridge"                     # Docker 网络模式（默认 bridge；完全隔离用 none）
+  #   forge_bin: "/usr/local/bin/forge"     # forge 二进制路径（默认读 os.Executable()）
+
+  # ── K8s 驱动示例 ──────────────────────────────────────────────────
+  # driver: "k8s"
+  # volumes_root: ""                        # K8s 模式使用 PVC，不需要宿主机共享目录
+  # options:
+  #   namespace: "forge-sandboxes"          # Pod 所在 namespace（默认 default）
+  #   image: "forge:latest"                 # Pod 镜像（默认 forge:latest）
+  #   storage_class: "standard"             # PVC StorageClass（默认使用集群默认）
+  #   workspace_size: "5Gi"                 # PVC 容量（默认 1Gi）
+  #   service_account: "forge-sandbox"      # Pod ServiceAccount（默认空）
+  #   kubeconfig: "/etc/forge/kubeconfig"   # kubeconfig 路径（默认空，使用 in-cluster config）
+  #   pod_idle_timeout: "30m"               # Pod 空闲多久后删除（默认 30m；Service+PVC 保留）
+  #   session_idle_timeout: "24h"           # Service+PVC 空闲多久后完全释放（默认 24h）
+
+# ─────────────────────────────────────────────────────────────────
+# 权限系统（详细示例见 configs/forge.permission.example.yaml）
+# CLI 参数 --mode/--allow/--deny 优先级高于此处配置
+# ─────────────────────────────────────────────────────────────────
+# 路径相对于本文件所在目录。
+#permission: "forge.permission.local.yaml"
+
+# ─────────────────────────────────────────────────────────────────
+# 记忆系统（两层架构）
+# Layer 1 (static)：始终开启，持久化存储 + system prompt 注入
+# Layer 2 (retrieval)：可选，可插拔检索后端
+# ─────────────────────────────────────────────────────────────────
+memory:
+  disabled: false      # true 可完全关闭记忆系统
+
+  # Layer 1：可插拔持久化存储
+  # driver 可选值同 session（memory / sqlite / postgres.<name>）
+  static:
+    driver: "sqlite"
+    options: {}
+    extract_threshold: 8              # 新增消息数达到此值后触发提取，默认 8
+    extract_cooldown_minutes: 10      # 两次提取之间的最小间隔（分钟），默认 10
+
+    # ── SQLite 示例（本地开发，自定义路径）──────────────────────────
+    # driver: "sqlite"
+    # options:
+    #   path: "~/.forge/memory.db"   # 默认 ~/.forge/memory.db
+
+    # ── PostgreSQL 示例 ──────────────────────────────────────────
+    # driver: "postgres.default"
+    # options: {}
+
+  # Layer 2：可插拔检索后端（留空则禁用）
+  retrieval:
+    backend: ""                      # 目前无内置后端；未来示例见下方注释
+    options: {}
+
+  # ── 未来：本地向量检索示例 ─────────────────────────────────────
+  # retrieval:
+  #   backend: "local-vector"
+  #   options:
+  #     top_k: "5"
+  #     model: "text-embedding-3-small"
+
+  # ── 未来：pgvector 示例 ──────────────────────────────────────
+  # retrieval:
+  #   backend: "pgvector"
+  #   options:
+  #     store: "postgres.default"
+
+# ─────────────────────────────────────────────────────────────────
+# Task 存储
+# driver 可选值同 session（memory / sqlite / postgres.<name>）
+# ─────────────────────────────────────────────────────────────────
+tasks:
+  driver: "sqlite"
+  options: {}
+
+  # ── SQLite 示例（本地开发，自定义路径）──────────────────────────
+  # driver: "sqlite"
+  # options:
+  #   path: ".forge/tasks.db"
+
+  # ── PostgreSQL 示例 ──────────────────────────────────────────
+  # driver: "postgres.default"
+  # options: {}
+
+# ─────────────────────────────────────────────────────────────────
+# 认证（serve 模式）
+# ─────────────────────────────────────────────────────────────────
+auth:
+  # HS256 JWT 签名密钥。serve 模式必须设置，否则启动失败。
+  # 生成随机密钥：openssl rand -hex 32
+  # 环境变量回退：FORGE_JWT_SECRET
+  jwt_secret: "123r4trgfdsaertytrewqsdfghjyutrewsdf"
+
+  # JWT 有效期（小时），默认 24
+  token_ttl_hours: 24
+
+  # 用户管理改由 store 后端 + CLI 完成，不再在此配置文件中列举：
+  #   forge admin user create --username alice --password <pass>
+  #   forge admin user create --username bob   --admin
+
+# ─────────────────────────────────────────────────────────────────
+# 应用存储（租户、用户、Vault 凭证等实体，共用同一存储）
+# driver 可选值同 session（memory / sqlite / postgres.<name>）
+# Vault 主密钥从环境变量 FORGE_VAULT_KEY（base64, 32 字节）读取，不写入配置文件
+# 生成主密钥：openssl rand -base64 32
+# ─────────────────────────────────────────────────────────────────
+store:
+  driver: "sqlite"
+  options: {}
+
+  # ── SQLite 示例（本地开发，自定义路径）──────────────────────────
+  # driver: "sqlite"
+  # options:
+  #   path: ".forge/store.db"
+
+  # ── PostgreSQL 示例 ──────────────────────────────────────────
+  # driver: "postgres.default"
+  # options: {}

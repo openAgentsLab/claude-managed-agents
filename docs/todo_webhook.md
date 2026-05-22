@@ -1,0 +1,1 @@
+Webhooks 公测（2026-05 发布）—— 官方现在支持 Webhook 推送事件，不用客户端轮询 SSE 了。对当前项目的 WaitForWork 轮询方案有参考价值。

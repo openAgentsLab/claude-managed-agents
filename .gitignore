@@ -1,0 +1,42 @@
+# Binaries
+/bin/
+/dist/
+*.exe
+*.test
+*.out
+.agent/
+.claude/
+
+# Go
+vendor/
+
+# Local runtime / secrets
+/var/
+*.env
+*.local.yaml
+
+# Runtime databases
+forge.db
+memory.db
+forge
+.forge/
+
+# Claude Code project instructions
+CLAUDE.md
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Node / Vue (web/)
+web/node_modules/
+web/dist/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*

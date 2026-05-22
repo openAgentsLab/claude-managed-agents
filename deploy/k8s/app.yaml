@@ -1,0 +1,230 @@
+# ── Backend ──────────────────────────────────────────────────────────────────
+apiVersion: v1
+kind: Service
+metadata:
+  name: forge-backend
+  namespace: forge
+spec:
+  type: ClusterIP
+  selector:
+    app: forge-backend
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forge-backend
+  namespace: forge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: forge-backend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: forge-backend
+    spec:
+      serviceAccountName: forge
+      containers:
+        - name: backend
+          image: your-registry/ai-forge-backend:latest  # 替换
+          command: ["/usr/local/bin/forge", "serve", "--config", "/etc/forge/forge.yaml", "--mcp-config", "/etc/forge/forge.mcp.yaml"]
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: forge-secret
+                  key: ANTHROPIC_API_KEY
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: forge-secret
+                  key: POSTGRES_PASSWORD
+            - name: FORGE_STORAGE_DSN
+              value: "postgres://forge:$(POSTGRES_PASSWORD)@postgres-host:5432/forge?sslmode=disable"  # 替换 postgres-host
+          volumeMounts:
+            - name: config
+              mountPath: /etc/forge
+              readOnly: true
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: config
+          configMap:
+            name: forge-config
+# ── Worker ───────────────────────────────────────────────────────────────────
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forge-worker
+  namespace: forge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: forge-worker
+  template:
+    metadata:
+      labels:
+        app: forge-worker
+    spec:
+      serviceAccountName: forge
+      containers:
+        - name: worker
+          image: your-registry/ai-forge-backend:latest  # 与 backend 同镜像
+          command: ["/usr/local/bin/forge", "worker", "--config", "/etc/forge/forge.yaml"]
+          env:
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: forge-secret
+                  key: ANTHROPIC_API_KEY
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: forge-secret
+                  key: POSTGRES_PASSWORD
+            - name: FORGE_STORAGE_DSN
+              value: "postgres://forge:$(POSTGRES_PASSWORD)@postgres-host:5432/forge?sslmode=disable"  # 替换 postgres-host
+          volumeMounts:
+            - name: config
+              mountPath: /etc/forge
+              readOnly: true
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "4"
+              memory: "4Gi"
+      volumes:
+        - name: config
+          configMap:
+            name: forge-config
+# ── Frontend ─────────────────────────────────────────────────────────────────
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forge-frontend
+  namespace: forge
+spec:
+  type: ClusterIP
+  selector:
+    app: forge-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forge-frontend
+  namespace: forge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: forge-frontend
+  template:
+    metadata:
+      labels:
+        app: forge-frontend
+    spec:
+      containers:
+        - name: nginx
+          image: your-registry/ai-forge-frontend:latest  # 替换
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+# ── Ingress ──────────────────────────────────────────────────────────────────
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: forge-ingress
+  namespace: forge
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"   # SSE 流式响应
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+    - hosts:
+        - forge.example.com  # 替换
+      secretName: forge-tls
+  rules:
+    - host: forge.example.com  # 替换
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: forge-backend
+                port:
+                  number: 8080
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: forge-backend
+                port:
+                  number: 8080
+          - path: /healthz
+            pathType: Exact
+            backend:
+              service:
+                name: forge-backend
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: forge-frontend
+                port:
+                  number: 80

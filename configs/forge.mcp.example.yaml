@@ -1,0 +1,92 @@
+# forge.mcp.example.yaml — 平台级 MCP Server 与工具配置示例
+# 复制为 forge.mcp.local.yaml 后根据实际环境填写。
+# 对应 ToolsConfig，字段直接写在顶层（无需 "tools:" 包裹）
+#
+# 作用域：这里配置的 MCP server 对所有用户共享（平台级）。
+# 用户级 MCP server 通过 REST API /v1/mcp/servers 或 Web UI 管理，存储在 store DB 中。
+
+# ─────────────────────────────────────────────────────────────────
+# 网络搜索工具
+# ─────────────────────────────────────────────────────────────────
+web_search:
+  provider: "brave"           # "brave"（默认）或 "serper"；环境变量 WEB_SEARCH_PROVIDER
+  api_key: ""                 # 留空则读 BRAVE_API_KEY（brave）或 SERPER_API_KEY（serper）
+
+# ─────────────────────────────────────────────────────────────────
+# MCP Server（平台级，具名 map）
+#
+# 字段说明：
+#   type     stdio（默认）| sse | http | ws
+#   command  stdio 模式：可执行文件路径，支持 npx / uvx / 绝对路径
+#   args     stdio 模式：命令行参数列表
+#   env      stdio 模式：额外注入的环境变量（明文，建议改用 Vault 引用）
+#   url      sse/http/ws 模式：服务端 URL
+#   headers  sse/http/ws 模式：请求头（如 Authorization）
+#   disabled true 则跳过此 server，但保留配置
+# ─────────────────────────────────────────────────────────────────
+mcp_servers: {}
+
+  # ── stdio 示例 ────────────────────────────────────────────────────
+
+  # GitHub MCP（npm / npx）
+  # github:
+  #   type: "stdio"
+  #   command: "npx"
+  #   args: ["-y", "@modelcontextprotocol/server-github"]
+  #   env:
+  #     GITHUB_PERSONAL_ACCESS_TOKEN: ""  # 建议通过 Vault 注入（Phase 3）
+
+  # Filesystem MCP（只暴露指定目录）
+  # filesystem:
+  #   type: "stdio"
+  #   command: "npx"
+  #   args: ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"]
+
+  # Python uv 工具链（uvx 运行，无需预安装）
+  # python-tools:
+  #   type: "stdio"
+  #   command: "uvx"
+  #   args: ["mcp-server-python-tools"]
+
+  # 本地可执行文件（绝对路径）
+  # my-internal-tool:
+  #   type: "stdio"
+  #   command: "/usr/local/bin/my-mcp-server"
+  #   args: ["--config", "/etc/my-mcp/config.json"]
+
+  # ── SSE 远程示例 ──────────────────────────────────────────────────
+
+  # 无鉴权公开 SSE 端点
+  # public-sse:
+  #   type: "sse"
+  #   url: "https://mcp.example.com/sse"
+
+  # Bearer Token 鉴权
+  # secure-sse:
+  #   type: "sse"
+  #   url: "https://mcp.internal/sse"
+  #   headers:
+  #     Authorization: "Bearer <token>"
+
+  # ── HTTP（Streamable HTTP）示例 ───────────────────────────────────
+
+  # http-tool:
+  #   type: "http"
+  #   url: "https://mcp.internal/mcp"
+  #   headers:
+  #     X-API-Key: "<key>"
+
+  # ── WebSocket 示例 ────────────────────────────────────────────────
+
+  # ws-tool:
+  #   type: "ws"
+  #   url: "wss://mcp.internal/ws"
+
+  # ── 临时停用（disabled: true）─────────────────────────────────────
+
+  # 配置保留但不连接，重新启用时去掉 disabled 行即可
+  # legacy-tool:
+  #   type: "stdio"
+  #   command: "npx"
+  #   args: ["-y", "@legacy/mcp-server"]
+  #   disabled: true

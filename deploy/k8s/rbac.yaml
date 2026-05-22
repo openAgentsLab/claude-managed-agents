@@ -1,0 +1,44 @@
+# ── 沙箱 Pod 服务账号（forge-sandbox namespace）────────────────────────────
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: forge-sandbox-runner
+  namespace: forge-sandbox
+automountServiceAccountToken: false
+---
+# ── 沙箱操作者 Role ──────────────────────────────────────────────────────────
+# K8sWatchPool 在 forge-sandbox namespace 中创建 Deployment/Service/PVC，
+# 并通过 Watch API 监控 Pod 就绪状态，因此需要以下权限。
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: forge-sandbox-operator
+  namespace: forge-sandbox
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["create", "get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["list", "watch"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["create", "get", "list"]
+---
+# ── 跨 namespace 绑定：forge SA（forge ns）→ sandbox operator（forge-sandbox ns）
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: forge-sandbox-operator
+  namespace: forge-sandbox
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: forge-sandbox-operator
+subjects:
+  - kind: ServiceAccount
+    name: forge
+    namespace: forge

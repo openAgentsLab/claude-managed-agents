@@ -1,0 +1,113 @@
+[
+  {
+    "name": "arithmetic_basic",
+    "prompt": "What is 17 multiplied by 13? Reply with just the number.",
+    "rubric": "- criterion: correct_answer\n  verify: reply contains the number 221"
+  },
+  {
+    "name": "arithmetic_division",
+    "prompt": "What is 144 divided by 12? Reply with just the number.",
+    "rubric": "- criterion: correct_answer\n  verify: reply contains the number 12"
+  },
+  {
+    "name": "string_reversal",
+    "prompt": "Reverse the string 'hello'. Reply with just the reversed string.",
+    "rubric": "- criterion: correct_reversal\n  verify: reply contains 'olleh'"
+  },
+  {
+    "name": "list_sorting",
+    "prompt": "Sort these numbers in ascending order: 5, 2, 8, 1, 9, 3. Reply with the sorted list separated by commas.",
+    "rubric": "- criterion: correct_order\n  verify: reply contains '1, 2, 3, 5, 8, 9' or '1,2,3,5,8,9'"
+  },
+  {
+    "name": "go_function_definition",
+    "prompt": "Write a Go function named 'Add' that takes two int parameters and returns their sum. Just the function body, no package declaration.",
+    "rubric": "- criterion: valid_go_syntax\n  verify: reply contains 'func Add' and 'return'\n- criterion: correct_signature\n  verify: reply contains two int parameters\n- criterion: returns_sum\n  verify: reply contains a + operator or addition logic"
+  },
+  {
+    "name": "go_error_handling",
+    "prompt": "Write a Go snippet that opens a file named 'data.txt' and handles the error if the file cannot be opened. Use os.Open.",
+    "rubric": "- criterion: uses_os_open\n  verify: reply contains 'os.Open'\n- criterion: checks_error\n  verify: reply contains 'err != nil' or error check\n- criterion: handles_error\n  verify: reply contains return or log statement for the error case"
+  },
+  {
+    "name": "json_marshaling",
+    "prompt": "Write a Go struct named 'Person' with fields Name (string) and Age (int), with JSON tags 'name' and 'age'.",
+    "rubric": "- criterion: struct_defined\n  verify: reply contains 'type Person struct'\n- criterion: json_tags_present\n  verify: reply contains 'json:\"name\"' and 'json:\"age\"'"
+  },
+  {
+    "name": "explain_goroutine",
+    "prompt": "In one sentence, what is a goroutine in Go?",
+    "rubric": "- criterion: mentions_concurrency\n  verify: reply contains 'concurrent' or 'goroutine' or 'lightweight thread' or 'parallel'\n- criterion: non_empty\n  verify: reply has at least 10 words"
+  },
+  {
+    "name": "explain_interface",
+    "prompt": "In one or two sentences, what is an interface in Go?",
+    "rubric": "- criterion: mentions_methods\n  verify: reply contains 'method' or 'methods'\n- criterion: mentions_type\n  verify: reply contains 'type' or 'types'\n- criterion: non_empty\n  verify: reply has at least 10 words"
+  },
+  {
+    "name": "sql_select",
+    "prompt": "Write a SQL query to select all columns from a table named 'users' where the 'active' column is true.",
+    "rubric": "- criterion: uses_select_star\n  verify: reply contains 'SELECT *' or 'SELECT *'\n- criterion: correct_table\n  verify: reply contains 'FROM users'\n- criterion: filters_active\n  verify: reply contains 'WHERE' and 'active'"
+  },
+  {
+    "name": "regex_email",
+    "prompt": "Write a Go regular expression pattern (as a string literal) that matches a simple email address format: something@something.something",
+    "rubric": "- criterion: contains_at_symbol\n  verify: reply contains '@'\n- criterion: contains_dot\n  verify: reply contains '.'\n- criterion: is_regex\n  verify: reply contains '\\\\.' or regex metacharacters or backtick string"
+  },
+  {
+    "name": "http_status_codes",
+    "prompt": "List the HTTP status codes for: OK, Not Found, Internal Server Error. Reply in the format: 200, 404, 500.",
+    "rubric": "- criterion: status_200\n  verify: reply contains '200'\n- criterion: status_404\n  verify: reply contains '404'\n- criterion: status_500\n  verify: reply contains '500'"
+  },
+  {
+    "name": "git_command_log",
+    "prompt": "What git command shows the commit history? Reply with just the command.",
+    "rubric": "- criterion: correct_command\n  verify: reply contains 'git log'"
+  },
+  {
+    "name": "docker_list_containers",
+    "prompt": "What docker command lists all running containers? Reply with just the command.",
+    "rubric": "- criterion: correct_command\n  verify: reply contains 'docker ps'"
+  },
+  {
+    "name": "fibonacci_sequence",
+    "prompt": "Write the first 8 numbers of the Fibonacci sequence starting from 0, separated by commas.",
+    "rubric": "- criterion: starts_correctly\n  verify: reply contains '0, 1, 1, 2, 3, 5, 8, 13' or '0,1,1,2,3,5,8,13'"
+  },
+  {
+    "name": "binary_conversion",
+    "prompt": "Convert the decimal number 42 to binary. Reply with just the binary number.",
+    "rubric": "- criterion: correct_binary\n  verify: reply contains '101010'"
+  },
+  {
+    "name": "go_slice_append",
+    "prompt": "Write a Go one-liner to append the value 99 to a slice named 'nums'. Use the append built-in.",
+    "rubric": "- criterion: uses_append\n  verify: reply contains 'append'\n- criterion: appends_99\n  verify: reply contains '99'\n- criterion: assigns_result\n  verify: reply contains '=' and 'nums'"
+  },
+  {
+    "name": "explain_context_cancellation",
+    "prompt": "In one or two sentences, why would you use context.WithCancel in Go?",
+    "rubric": "- criterion: mentions_cancel\n  verify: reply contains 'cancel' or 'cancellation'\n- criterion: mentions_goroutine_or_request\n  verify: reply contains 'goroutine' or 'request' or 'operation'\n- criterion: non_empty\n  verify: reply has at least 10 words"
+  },
+  {
+    "name": "time_formatting",
+    "prompt": "What Go package and format constant would you use to format a time.Time as RFC3339? Reply with just 'time.RFC3339'.",
+    "rubric": "- criterion: correct_answer\n  verify: reply contains 'time.RFC3339'"
+  },
+  {
+    "name": "channel_direction",
+    "prompt": "In Go, what does the type 'chan<- int' mean? Answer in one sentence.",
+    "rubric": "- criterion: mentions_send_only\n  verify: reply contains 'send' or 'write' or 'send-only'\n- criterion: mentions_receive_blocked\n  verify: reply contains 'receive' or 'read' or 'cannot receive' or 'only send'\n- criterion: non_empty\n  verify: reply has at least 5 words"
+  },
+  {
+    "name": "go_defer_order",
+    "prompt": "If three defer statements are in the same function, in what order do they execute? Reply in one word: LIFO or FIFO.",
+    "rubric": "- criterion: correct_order\n  verify: reply contains 'LIFO' or 'last-in, first-out' or 'last in first out' or 'reverse'",
+    "skip_slow": false
+  },
+  {
+    "name": "pointer_dereference",
+    "prompt": "In Go, given 'p := &x', how do you get the value that p points to? Reply with just the expression.",
+    "rubric": "- criterion: correct_dereference\n  verify: reply contains '*p'"
+  }
+]
