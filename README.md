@@ -1,6 +1,6 @@
-# AI-Forge
+# Claude-Managed-Agents
 
-**AI-Forge** 是一个生产级多租户 AI Agent 平台，以 Go 语言实现，支持多会话并发、多智能体协同、上下文压缩与插件化工具生态，可部署于本地开发环境或 Kubernetes 集群。
+**Claude-Managed-Agents** 是一个生产级多租户 AI Agent 平台，以 Go 语言实现，支持多会话并发、多智能体协同、上下文压缩与插件化工具生态，可部署于本地开发环境或 Kubernetes 集群。
 
 > 架构设计参考：[docs/系统架构设计文档.md](docs/系统架构设计文档.md)
 
